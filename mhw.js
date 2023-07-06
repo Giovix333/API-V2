@@ -11,15 +11,16 @@ const apiEndpoints = [
   'https://mhw-db.com/ailments',
   'https://mhw-db.com/monsters',
   'https://mhw-db.com/weapons',
-  'https://mhw-db.com/armor/sets'
+  'https://mhw-db.com/armor/sets',
+  'https://mhw-db.com/charms'
 ];
 
 Promise.all(apiEndpoints.map(endpoint => fetch(endpoint)))
   .then(responses => Promise.all(responses.map(response => response.json())))
   .then(items => {
     data = items.flat();
-    filteredData = data;
-    renderData();
+    filteredData = []; // Inicialmente no hay resultados filtrados
+    // renderData(); // No se renderizan los datos automáticamente al cargar la página
   })
   .catch(error => {
     console.log('Error:', error);
@@ -33,10 +34,16 @@ scrollButton.addEventListener('click', scrollToTop);
 function renderData() {
   dataListElement.innerHTML = '';
 
-  filteredData.forEach(item => {
-    const itemElement = createItemElement(item);
-    dataListElement.appendChild(itemElement);
-  });
+  if (filteredData.length === 0) {
+    const noResultsElement = document.createElement('p');
+    noResultsElement.textContent = 'No results found.';
+    dataListElement.appendChild(noResultsElement);
+  } else {
+    filteredData.forEach(item => {
+      const itemElement = createItemElement(item);
+      dataListElement.appendChild(itemElement);
+    });
+  }
 }
 
 function createItemElement(item) {
@@ -69,14 +76,21 @@ function getItemDetails(item) {
 
 function search() {
   const searchTerm = searchInput.value.toLowerCase();
-  filteredData = data.filter(item => item.name.toLowerCase().includes(searchTerm));
+
+  if (searchTerm.trim() === '') {
+    filteredData = [];
+  } else {
+    filteredData = data.filter(item => item.name.toLowerCase().includes(searchTerm));
+  }
+
   renderData();
 }
 
 function filter() {
   const filterValue = filterSelect.value;
-  if (filterValue === '') {
-    filteredData = data;
+
+  if (filterValue === 'all') {
+    filteredData = [];
   } else if (filterValue === 'ailments') {
     filteredData = data.filter(item => 'description' in item);
   } else if (filterValue === 'monsters') {
@@ -86,6 +100,7 @@ function filter() {
   } else if (filterValue === 'armor') {
     filteredData = data.filter(item => 'rank' in item);
   }
+
   renderData();
 }
 
@@ -96,8 +111,6 @@ function scrollToTop() {
   });
 }
 
-/* ... El resto de tu código ... */
-
 window.addEventListener('scroll', toggleScrollButton);
 
 function toggleScrollButton() {
@@ -107,4 +120,3 @@ function toggleScrollButton() {
     scrollButton.classList.remove('active');
   }
 }
-
